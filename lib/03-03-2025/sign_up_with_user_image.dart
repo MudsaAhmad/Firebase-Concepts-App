@@ -1,20 +1,18 @@
 import 'dart:io';
-
-import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-class SignUpScreenTwo extends StatefulWidget {
-  const SignUpScreenTwo({super.key});
+class SignUpWithUserImage extends StatefulWidget {
+  const SignUpWithUserImage({super.key});
 
   @override
-  State<SignUpScreenTwo> createState() => _SignUpScreenTwoState();
+  State<SignUpWithUserImage> createState() => _SignUpWithUserImageState();
 }
 
-class _SignUpScreenTwoState extends State<SignUpScreenTwo> {
+class _SignUpWithUserImageState extends State<SignUpWithUserImage> {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final emailController = TextEditingController();
@@ -27,7 +25,8 @@ class _SignUpScreenTwoState extends State<SignUpScreenTwo> {
 
   Future<void> pickImage() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
       setState(() {
@@ -41,19 +40,43 @@ class _SignUpScreenTwoState extends State<SignUpScreenTwo> {
 
   Future<String?> uploadImageToStorage(String userId, File imageFile) async {
     try {
-      Reference storageRef = FirebaseStorage.instance.ref().child("mu_user_profile_images/$userId.jpg");
+      Reference storageRef = FirebaseStorage.instance
+          .ref()
+          .child("my_current_userd_profile_images/$userId.jpg");
+
       UploadTask uploadTask = storageRef.putFile(imageFile);
 
       TaskSnapshot snapshot = await uploadTask;
-      String downloadUrl = await snapshot.ref.getDownloadURL();
 
-      print("Image Uploaded Successfully: $downloadUrl");
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+      print('image url get------>$downloadUrl');
+
       return downloadUrl;
-    } catch (e) {
-      print("Error Uploading Image: $e");
+    } catch (error) {
+      print('error------->$error');
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$error')));
       return null;
     }
   }
+
+  // Future<String?> uploadImageToStorage(String userId, File imageFile) async {
+  //   try {
+  //     Reference storageRef = FirebaseStorage.instance
+  //         .ref()
+  //         .child("mu_user_profile_images/$userId.jpg");
+  //     UploadTask uploadTask = storageRef.putFile(imageFile);
+  //
+  //     TaskSnapshot snapshot = await uploadTask;
+  //     String downloadUrl = await snapshot.ref.getDownloadURL();
+  //
+  //     print("Image Uploaded Successfully: $downloadUrl");
+  //     return downloadUrl;
+  //   } catch (e) {
+  //     print("Error Uploading Image: $e");
+  //     return null;
+  //   }
+  // }
 
   // store user data in firestore
   Future<void> storeUserDataInFirestore(String uid, String? imageUrl) async {
@@ -104,15 +127,21 @@ class _SignUpScreenTwoState extends State<SignUpScreenTwo> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Sign Up'),
+        backgroundColor: Colors.teal,
+        surfaceTintColor: Colors.white,
+        title: const Text(
+          'Sign Up with user image',
+          style: TextStyle(
+              fontSize: 20, color: Colors.white, fontWeight: FontWeight.w600),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: SingleChildScrollView(
           child: Column(
             children: [
-
               GestureDetector(
                 onTap: pickImage,
                 child: CircleAvatar(
@@ -121,21 +150,17 @@ class _SignUpScreenTwoState extends State<SignUpScreenTwo> {
                   backgroundImage: _selectedImage != null
                       ? FileImage(_selectedImage!)
                       : _imageUrl != null
-                      ? NetworkImage(_imageUrl!) as ImageProvider
-                      : null,
+                          ? NetworkImage(_imageUrl!) as ImageProvider
+                          : null,
                   child: _selectedImage == null && _imageUrl == null
-                      ? const Icon(Icons.camera_alt, size: 40, color: Colors.white)
+                      ? const Icon(Icons.camera_alt,
+                          size: 40, color: Colors.white)
                       : null,
                 ),
               ),
-
-              CircleAvatar(
-                radius: 60,
-                backgroundImage: NetworkImage(_imageUrl!),
+              SizedBox(
+                height: 20,
               ),
-
-              SizedBox(height: 20,),
-
               TextFormField(
                 controller: firstNameController,
                 decoration: const InputDecoration(
@@ -189,8 +214,6 @@ class _SignUpScreenTwoState extends State<SignUpScreenTwo> {
               ElevatedButton(
                   onPressed: () async {
                     try {
-
-
                       if (passwordController.text ==
                           confirmPasswordController.text) {
                         setState(() {
@@ -204,23 +227,30 @@ class _SignUpScreenTwoState extends State<SignUpScreenTwo> {
                         print('user id---->${user.user?.uid}');
 
                         if (_selectedImage != null) {
-                          String? imageUrl = await uploadImageToStorage(user.user!.uid, _selectedImage!);
-                          await storeUserDataInFirestore(user.user!.uid, imageUrl);
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar( const SnackBar(content: Text('Account created successfully!')));
+                          String? imageUrl = await uploadImageToStorage(
+                              user.user!.uid, _selectedImage!);
+                          await storeUserDataInFirestore(
+                              user.user!.uid, imageUrl);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Account created successfully!')));
                         } else {
                           await storeUserDataInFirestore(user.user!.uid, null);
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar( const SnackBar(content: Text('Account created successfully!')));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text('Account created successfully!')));
                         }
 
                         setState(() {
                           loading = false;
                         });
-                      }else{
+                      } else {
                         print('password and confirm password not matched!!');
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(const SnackBar(content: Text('Password and confirm password not matched!!')));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            content: Text(
+                                'Password and confirm password not matched!!')));
                       }
                     } on FirebaseAuthException catch (error) {
                       ScaffoldMessenger.of(context)
@@ -242,15 +272,13 @@ class _SignUpScreenTwoState extends State<SignUpScreenTwo> {
               const SizedBox(
                 height: 20,
               ),
+              ElevatedButton(
+                  onPressed: () async {
+                    final uid = FirebaseAuth.instance.currentUser?.uid;
 
-              ElevatedButton(onPressed: () async {
-
-                final uid = FirebaseAuth.instance.currentUser?.uid;
-
-               await getUserDataFromFirestore(uid!);
-
-              }, child: Text('Get my data')),
-
+                    await getUserDataFromFirestore(uid!);
+                  },
+                  child: Text('Get my data')),
             ],
           ),
         ),
