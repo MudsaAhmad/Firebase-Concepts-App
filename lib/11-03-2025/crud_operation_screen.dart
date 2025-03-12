@@ -27,7 +27,6 @@ class _CrudOperationScreenState extends State<CrudOperationScreen> {
   Future<void> updateData(String docId, String currentName) async {
     TextEditingController updateController =
         TextEditingController(text: currentName);
-
     showDialog(
       context: context,
       builder: (context) {
@@ -61,14 +60,12 @@ class _CrudOperationScreenState extends State<CrudOperationScreen> {
 
   // Function to get real-time data using Stream
   Stream<QuerySnapshot> getStreamData() {
-    return _firestore
-        .collection('crudData').snapshots();
+    return _firestore.collection('crudData').snapshots();
   }
 
   // Function to get one-time data using Future
   Future<QuerySnapshot> getFutureData() {
-    return _firestore
-        .collection('crudData').get();
+    return _firestore.collection('crudData').get();
   }
 
   @override
